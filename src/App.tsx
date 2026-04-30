@@ -516,8 +516,20 @@ export default function App() {
 
   useEffect(() => {
     fetch('/api/content')
-      .then(res => res.json())
-      .then(data => setContent(data));
+      .then(res => {
+        if (!res.ok) throw new Error('API failed');
+        return res.json();
+      })
+      .then(data => {
+        if (data && data.hero) {
+          setContent(data);
+        } else {
+          console.error('Invalid content format:', data);
+        }
+      })
+      .catch(err => {
+        console.error('Fetch error:', err);
+      });
 
     const params = new URLSearchParams(window.location.search);
     if (params.get('admin') === 'true') {
