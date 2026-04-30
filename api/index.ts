@@ -117,7 +117,9 @@ function getFilePath(filename: string) {
   // Try to find the original file in possible locations
   const possiblePaths = [
     path.join(process.cwd(), filename),
-    path.join(process.cwd(), '..', filename)
+    path.join(process.cwd(), '..', filename),
+    path.join(__dirname, filename),
+    path.join(__dirname, '..', filename)
   ];
   
   let sourcePath = possiblePaths[0];
@@ -143,7 +145,7 @@ function getFilePath(filename: string) {
   return tmpPath;
 }
 
-app.get('/api/content', (req, res) => {
+app.get(['/api/content', '/content'], (req, res) => {
   try {
     const contentPath = getFilePath('content.json');
     if (fs.existsSync(contentPath)) {
@@ -158,7 +160,7 @@ app.get('/api/content', (req, res) => {
   }
 });
 
-app.post('/api/content', (req, res) => {
+app.post(['/api/content', '/content'], (req, res) => {
   try {
     const contentPath = getFilePath('content.json');
     fs.writeFileSync(contentPath, JSON.stringify(req.body, null, 2));
@@ -168,7 +170,7 @@ app.post('/api/content', (req, res) => {
   }
 });
 
-app.post('/api/register', (req, res) => {
+app.post(['/api/register', '/register'], (req, res) => {
   try {
     const registration = {
       ...req.body,

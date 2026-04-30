@@ -515,8 +515,12 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    fetch('/api/content')
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+    fetch('/api/content', { signal: controller.signal })
       .then(res => {
+        clearTimeout(timeoutId);
         if (!res.ok) throw new Error('API failed');
         return res.json();
       })
