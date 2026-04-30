@@ -5,11 +5,26 @@ import path from 'path';
 const app = express();
 app.use(express.json());
 
-const contentPath = path.join(process.cwd(), 'content.json');
+// Helper to determine the correct path for a file (handles Vercel's read-only /tmp environment)
+function getFilePath(filename: string) {
+  const isVercel = process.env.VERCEL === '1';
+  const localPath = path.join(process.cwd(), filename);
+  
+  if (!isVercel) return localPath;
+  
+  const tmpPath = path.join('/tmp', filename);
+  // Seed the /tmp path initially if the original exists and the tmp one doesn't yet
+  if (!fs.existsSync(tmpPath) && fs.existsSync(localPath)) {
+    fs.copyFileSync(localPath, tmpPath);
+  }
+  
+  return tmpPath;
+}
 
 app.get('/api/content', (req, res) => {
   try {
-    const data = fs.readFileSync(contentPath, 'utf-8');
+    const contentPath = getFilePath('content.json');
+    const data = fs.existsSync(contentPath) ? fs.readFileSync(contentPath, 'utf-8') : '{}';
     res.json(JSON.parse(data));
   } catch (error) {
     res.status(500).json({ error: 'Failed to read content' });
@@ -18,6 +33,7 @@ app.get('/api/content', (req, res) => {
 
 app.post('/api/content', (req, res) => {
   try {
+    const contentPath = getFilePath('content.json');
     fs.writeFileSync(contentPath, JSON.stringify(req.body, null, 2));
     res.json({ message: 'Content updated successfully' });
   } catch (error) {
@@ -33,7 +49,7 @@ app.post('/api/register', (req, res) => {
       timestamp: new Date().toISOString()
     };
     
-    const registrationsPath = path.join(process.cwd(), 'registrations.json');
+    const registrationsPath = getFilePath('registrations.json');
     let registrations = [];
     
     if (fs.existsSync(registrationsPath)) {
